@@ -1,0 +1,214 @@
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import styled from 'styled-components';
+import SignatureCanvas from "react-signature-canvas";
+
+import {Button, Input} from "./index";
+import {propFn} from "../../lib/theme";
+
+const property = propFn('input');
+
+const Container = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const SignatureWrapper = styled.div`
+  position: relative;
+  background: ${property('background')};
+  border: ${property('border')};
+
+  canvas {
+    position: relative;
+    width: 100%;
+    height: 125px;
+  }  
+`;
+
+const SignatureBackground = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 64px;
+  color: #eee;
+`;
+
+const SecondRow = styled.div`
+  margin-top: .25rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-column-gap: 1rem;
+  
+  & > div > label {
+    margin-bottom: 0;
+  }
+  
+  input {
+    margin-top: 0;
+  }
+  
+  button {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+`;
+
+const InputWrapper = styled.div`
+  opacity: ${({visible}:{visible:boolean}) => visible ? 1 : 0};
+`;
+
+const FONTS:{[key:string]: number} = {
+    Satisfy: 64
+};
+
+function getFont(name:string) {
+    return `${FONTS[name]}px ${name}`;
+}
+
+const PreloadFont = styled(({font, className}:{font:string, className?:string}) => (
+    <span className={className}>{font}</span>
+))`
+  font-family: "${({font}) => font}";
+`;
+
+const PreloadFonts = styled(({className}:{className?:string}) => (
+    <div className={className}>
+        {Object.keys(FONTS).map(font => <PreloadFont key={font} font={font}/>)}
+    </div>
+))`
+  overflow: hidden;
+  height: 0;
+`;
+
+interface Props {
+    placeholder?: string,
+    background?: string,
+    keyboard?: boolean,
+    autoCapitalize?: string,
+    onChange: (encodedImage:string) => void
+}
+
+const Pad = ({placeholder, background, keyboard, autoCapitalize, onChange}:Props) => {
+    const [signing, setSigning] = useState(false);
+    const [signed, setSigned] = useState(false);
+    const [typed, setTyped] = useState('');
+    const [color/*, setColor*/] = useState('#000');
+    const [font/*, setFont*/] = useState(getFont('Satisfy'));
+
+    const signatureRef = useRef(null);
+
+    const update = useCallback((clear?:boolean) => {
+        if (clear) {
+            onChange('');
+        }
+        else {
+            const signatureApi = signatureRef.current;
+
+            // @ts-ignore
+            const signature = signatureApi ? signatureApi.toDataURL('image/png') : '';
+
+            onChange(signature);
+        }
+    }, [onChange]);
+
+    useEffect(() => {
+        if (!typed || signed)
+            return;
+
+        const signatureApi = signatureRef.current;
+
+        if (signatureApi) {
+            // @ts-ignore
+            const canvas = signatureApi.getCanvas();
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+            ctx.fillStyle = color;
+            ctx.font = `${font}`;
+            ctx.fillText(typed, 16, canvas.clientHeight - 32);
+        }
+
+        update();
+    }, [typed, color, font, signed, update]);
+
+    const onClear = () => {
+        setSigned(false);
+        setTyped('');
+
+        const signatureApi = signatureRef.current;
+
+        if (signatureApi) {
+            // @ts-ignore
+            signatureApi.clear();
+
+            if (typed) {
+                // @ts-ignore
+                signatureApi && signatureApi.on();
+            }
+
+            update(true);
+        }
+    };
+
+    const onBeginSignature = () => {
+        setSigning(true);
+    };
+
+    const onEndSignature = () => {
+        setSigning(false);
+        setSigned(true);
+        update();
+    };
+
+    const onTextChange = (e:any) => {
+        const text = e.target.value;
+
+        const signatureApi = signatureRef.current;
+
+        if (text) {
+            if (signatureApi) {
+                if (!typed) {
+                    // @ts-ignore
+                    signatureApi.off();
+                }
+            }
+        }
+        else if (typed && signatureApi) {
+            onClear();
+        }
+
+        setTyped(text);
+    };
+
+    return (
+        <Container>
+            <SignatureWrapper>
+                {!(signing || signed || typed) && <SignatureBackground>{background}</SignatureBackground>}
+                <SignatureCanvas
+                    ref={signatureRef}
+                    onBegin={onBeginSignature}
+                    onEnd={onEndSignature}
+                />
+            </SignatureWrapper>
+            <SecondRow>
+                <InputWrapper visible={!(signed || signing)}>
+                    {keyboard &&
+                    <Input
+                        placeholder={placeholder}
+                        value={typed}
+                        onChange={onTextChange}
+                        disabled={signed}
+                        autoCapitalize={autoCapitalize}
+                        />
+                    }
+                </InputWrapper>
+                <Button disabled={!(signed || typed)} onClick={onClear}>Clear</Button>
+            </SecondRow>
+            <PreloadFonts/>
+        </Container>
+    );
+};
+
+export default Pad;
