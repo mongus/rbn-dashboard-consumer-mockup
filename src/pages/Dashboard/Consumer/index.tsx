@@ -7,6 +7,7 @@ import AmExConnect from "./Boxes/AmEx/AmExConnect";
 import Buying from './Boxes/Buying/BuyingForm';
 import Selling from './Boxes/Selling/SellingForm';
 import Calendly from "./Boxes/Consult/Calendly";
+import Calculator from './Boxes/Calculator/SliderCalculator'
 
 const ConsumerRoutes = ({match}:RouteComponentProps) => (
     <>
@@ -16,6 +17,7 @@ const ConsumerRoutes = ({match}:RouteComponentProps) => (
         <Route path={`${match.path}/buying`} component={Buying}/>
         <Route path={`${match.path}/selling`} component={Selling}/>
         <Route path={`${match.path}/schedule`} component={Calendly}/>
+        <Route path={`${match.path}/calculator`} component={Calculator}/>
     </>
 );
 

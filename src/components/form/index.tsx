@@ -10,3 +10,4 @@ export {default as Box} from './Box';
 // export {default as Pad} from './Pad';
 export {default as TextArea} from './TextArea';
 export {default as Checkbox} from './Checkbox';
+export {default as Slider} from './Slider';
