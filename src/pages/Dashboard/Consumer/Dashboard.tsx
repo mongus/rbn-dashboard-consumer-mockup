@@ -11,6 +11,7 @@ import AmEx from "./Boxes/AmEx";
 import Buying from "./Boxes/Buying";
 import Selling from "./Boxes/Selling";
 import Consult from "./Boxes/Consult";
+import Calculator from './Boxes/Calculator';
 
 const AmexBlock = styled.div`
   color: ${({theme:{amexBlue}}) => amexBlue };
@@ -74,6 +75,7 @@ function ConsumerDashboard() {
         if (selling) boxes.push(<Selling step={boxes.length + 1} key="selling"/>);
 
         boxes.push(<Consult step={boxes.length + 1} key="consult" disabled={!enableConsult}/>);
+        boxes.push(<Calculator step={boxes.length + 1} key="calculator" disabled={false}/>);
     }
 
     const viewer = {
